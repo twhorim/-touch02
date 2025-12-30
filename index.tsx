@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from "@google/genai";
 import { 
-  User, 
-  MessageSquare, 
   BarChart2, 
   Activity, 
   Target, 
@@ -208,8 +206,6 @@ const PERSONAS: Persona[] = [
   },
 ];
 
-// --- Components ---
-
 const ChatBubble: React.FC<{ message: string, sender: 'user' | 'student' }> = ({ message, sender }) => (
   <div className={`flex ${sender === 'user' ? 'justify-end' : 'justify-start'} mb-5`}>
     <div className={`max-w-[85%] rounded-2xl px-5 py-3 shadow-sm ${
@@ -241,7 +237,7 @@ export default function Simulator() {
   const handleSelectPersona = (p: Persona) => {
     setSelectedPersona(p);
     setMessages([
-      { text: `안녕하세요, 선생님. 저는 ${p.grade} ${p.name}입니다.`, sender: 'student' }
+      { text: `안녕하세요, 선생님. 저는 ${p.grade} ${p.name}입니다. 무엇을 도와드릴까요?`, sender: 'student' }
     ]);
     setNotes({ inhibitor: '', prescription: '' });
   };
@@ -252,12 +248,11 @@ export default function Simulator() {
 
     const userMessage = input;
     setInput('');
-    
     setMessages(prev => [...prev, { text: userMessage, sender: 'user' }]);
     setLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
       
       const history = messages.map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'model' as const,
@@ -275,11 +270,11 @@ export default function Simulator() {
         }
       });
 
-      const aiText = response.text || "대답을 하지 못했습니다.";
+      const aiText = response.text || "미안해요, 잘 이해하지 못했어요.";
       setMessages(prev => [...prev, { text: aiText, sender: 'student' }]);
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { text: "통신 중 오류가 발생했습니다. API 키가 유효한지 확인해주세요.", sender: 'student' }]);
+      setMessages(prev => [...prev, { text: "통신 중 오류가 발생했습니다. API 키 설정을 확인해주세요.", sender: 'student' }]);
     } finally {
       setLoading(false);
     }
@@ -291,9 +286,9 @@ export default function Simulator() {
         <header className="mb-12 text-center">
           <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 flex items-center justify-center gap-3 mb-4">
             <BrainCircuit className="w-10 h-10 text-blue-600 shrink-0" />
-            <span>학생 맞춤형 성장지원 시뮬레이터</span>
+            <span>AI·디지털 성장지원 시뮬레이터</span>
           </h1>
-          <p className="text-slate-500 text-lg">데이터를 바탕으로 학생의 학습과 정서를 진단하고 지도해보세요.</p>
+          <p className="text-slate-500 text-lg">실제 학생 데이터를 기반으로 한 12가지 페르소나와 대화하며 맞춤형 지도를 연습해보세요.</p>
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -322,13 +317,9 @@ export default function Simulator() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col h-screen overflow-hidden">
-      {/* Top Navigation */}
       <nav className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setSelectedPersona(null)}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-          >
+          <button onClick={() => setSelectedPersona(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
             <ChevronLeft className="w-6 h-6 text-slate-600" />
           </button>
           <div className="flex items-center gap-3">
@@ -346,113 +337,38 @@ export default function Simulator() {
       </nav>
 
       <main className="flex-1 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 md:p-6 overflow-hidden">
-        {/* Left: Student Data Evidence */}
         <div className="hidden lg:block lg:col-span-4 space-y-6 overflow-y-auto pr-2 scrollbar-hide">
           <section className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-            <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-3">
-              <BarChart2 className="w-5 h-5 text-blue-500" />
-              정량 데이터 (LMS 로그)
-            </h3>
-            <div className="bg-blue-50/50 p-4 rounded-xl text-sm text-blue-900 leading-relaxed font-medium italic border border-blue-100">
-              "{selectedPersona.quantitative}"
-            </div>
+            <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-3"><BarChart2 className="w-5 h-5 text-blue-500" />정량 데이터 (LMS 로그)</h3>
+            <div className="bg-blue-50/50 p-4 rounded-xl text-sm text-blue-900 leading-relaxed font-medium italic border border-blue-100">"{selectedPersona.quantitative}"</div>
           </section>
-
           <section className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-            <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-3">
-              <BookOpen className="w-5 h-5 text-green-500" />
-              정성 데이터 (관찰 기록)
-            </h3>
-            <div className="bg-green-50/50 p-4 rounded-xl text-sm text-green-900 leading-relaxed font-medium italic border border-green-100">
-              "{selectedPersona.qualitative}"
-            </div>
+            <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-3"><BookOpen className="w-5 h-5 text-green-500" />정성 데이터 (관찰 기록)</h3>
+            <div className="bg-green-50/50 p-4 rounded-xl text-sm text-green-900 leading-relaxed font-medium italic border border-green-100">"{selectedPersona.qualitative}"</div>
           </section>
-
           <section className="bg-slate-900 text-white rounded-2xl p-5 shadow-lg">
-            <h3 className="font-bold text-slate-200 flex items-center gap-2 mb-4">
-              <BrainCircuit className="w-5 h-5 text-blue-400" />
-              교사 관찰 메모
-            </h3>
+            <h3 className="font-bold text-slate-200 flex items-center gap-2 mb-4"><BrainCircuit className="w-5 h-5 text-blue-400" />교사 지도 메모</h3>
             <div className="space-y-4">
-              <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 block">저해 요인</label>
-                <textarea 
-                  value={notes.inhibitor}
-                  onChange={(e) => setNotes({...notes, inhibitor: e.target.value})}
-                  placeholder="학습 방해 요소를 기록..."
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none h-20 resize-none transition-all"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 block">지도 처방</label>
-                <textarea 
-                  value={notes.prescription}
-                  onChange={(e) => setNotes({...notes, prescription: e.target.value})}
-                  placeholder="맞춤형 지도 계획 기록..."
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none h-20 resize-none transition-all"
-                />
-              </div>
+              <textarea value={notes.inhibitor} onChange={(e) => setNotes({...notes, inhibitor: e.target.value})} placeholder="학습 방해 요인..." className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none h-20 resize-none transition-all" />
+              <textarea value={notes.prescription} onChange={(e) => setNotes({...notes, prescription: e.target.value})} placeholder="맞춤형 처방..." className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none h-20 resize-none transition-all" />
             </div>
           </section>
         </div>
 
-        {/* Right: Chat Simulation */}
         <div className="lg:col-span-8 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative h-full">
           <div className="bg-slate-50 border-b border-slate-100 px-6 py-3 text-xs font-bold text-slate-500 flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            학생 {selectedPersona.name}과(와) 연결됨
+            학생과 실시간 연결 중
           </div>
-
           <div className="flex-1 overflow-y-auto p-4 md:p-6 chat-container">
-            {messages.map((m, i) => (
-              <ChatBubble key={i} message={m.text} sender={m.sender} />
-            ))}
-            {loading && (
-              <div className="flex justify-start mb-5">
-                <div className="bg-slate-100 px-4 py-2 rounded-xl flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
-                </div>
-              </div>
-            )}
+            {messages.map((m, i) => <ChatBubble key={i} message={m.text} sender={m.sender} />)}
+            {loading && <div className="flex justify-start mb-5"><div className="bg-slate-100 px-4 py-2 rounded-xl flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div><div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></div><div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></div></div></div>}
             <div ref={chatEndRef} />
           </div>
-
           <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-100 bg-white">
             <div className="flex gap-2">
-              <input 
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="학생에게 따뜻한 말을 건네보세요..."
-                className="flex-1 bg-slate-100 rounded-xl px-4 py-3 text-sm md:text-base outline-none focus:ring-2 focus:ring-blue-500/10 transition-all"
-                disabled={loading}
-              />
-              <button 
-                type="submit"
-                disabled={loading || !input.trim()}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white p-3 rounded-xl transition-all shadow-sm active:scale-95"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {[
-                "학교 생활은 어때?",
-                "어려운 부분이 있니?",
-                "AI 튜터는 도움이 돼?",
-                "같이 계획을 세워볼까?"
-              ].map((hint, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setInput(hint)}
-                  className="whitespace-nowrap text-[11px] font-bold bg-slate-50 text-slate-500 px-3 py-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors border border-slate-200"
-                >
-                  {hint}
-                </button>
-              ))}
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="학생과 대화를 시작하세요..." className="flex-1 bg-slate-100 rounded-xl px-4 py-3 text-sm md:text-base outline-none focus:ring-2 focus:ring-blue-500/10 transition-all" disabled={loading} />
+              <button type="submit" disabled={loading || !input.trim()} className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white p-3 rounded-xl transition-all shadow-sm active:scale-95"><Send className="w-5 h-5" /></button>
             </div>
           </form>
         </div>
